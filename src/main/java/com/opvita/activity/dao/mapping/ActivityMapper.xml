@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cul.culsite.dao.ActivityMapper">
+
+    <select id="nextActivityId" resultType="java.lang.String">
+        select lpad(seq_m_activity.nextval, 10, '0')  from dual
+    </select>
+
+    <select id="nextActivityRuleId" resultType="java.lang.String">
+        select lpad(seq_m_activity_rule.nextval, 10, '0')  from dual
+    </select>
+
+    <select id="nextRuleRewardId" resultType="java.lang.String">
+        select lpad(seq_m_rule_reward.nextval, 10, '0')  from dual
+    </select>
+
+    <select id="nextRewardLogId" resultType="java.lang.String">
+        select lpad(seq_m_reward_log.nextval, 16, '0')  from dual
+    </select>
+
+    <select id="nextRuleParticipationId" resultType="java.lang.String">
+        select lpad(seq_m_rule_participation.nextval, 10, '0')  from dual
+    </select>
+
+    <select id="nextProductParticipationId" resultType="java.lang.String">
+        select lpad(seq_m_product_participation.nextval, 10, '0')  from dual
+    </select>
+
+</mapper>
