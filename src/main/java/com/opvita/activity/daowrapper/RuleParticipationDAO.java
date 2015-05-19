@@ -15,6 +15,9 @@ public interface RuleParticipationDAO {
     // 获取一个活动下的所有规则
     public List<MRuleParticipationDTO> getRuleParticipation(String activityId);
 
+    // 获取一个规则参与了哪些活动
+    public List<MRuleParticipationDTO> getActivityParticipation(String ruleId);
+
     // 删除该活动下的所有规则参与
     public int clearRuleParticipation(String activityId);
 

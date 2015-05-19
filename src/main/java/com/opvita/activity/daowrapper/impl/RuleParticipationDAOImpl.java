@@ -17,8 +17,10 @@ import java.util.List;
  */
 @Service
 public class RuleParticipationDAOImpl implements RuleParticipationDAO {
-    @Autowired private MRuleParticipationDTOMapper mapper;
-    @Autowired private ActivityMapper activityMapper;
+    @Autowired
+    private MRuleParticipationDTOMapper mapper;
+    @Autowired
+    private ActivityMapper activityMapper;
 
     @Override
     public MRuleParticipationDTO saveRuleParticipation(String activityId, String ruleId) {
@@ -37,6 +39,13 @@ public class RuleParticipationDAOImpl implements RuleParticipationDAO {
     public List<MRuleParticipationDTO> getRuleParticipation(String activityId) {
         MRuleParticipationDTOCriteria criteria = new MRuleParticipationDTOCriteria();
         criteria.createCriteria().andActivityIdEqualTo(activityId);
+        return mapper.selectByExample(criteria);
+    }
+
+    @Override
+    public List<MRuleParticipationDTO> getActivityParticipation(String ruleId) {
+        MRuleParticipationDTOCriteria criteria = new MRuleParticipationDTOCriteria();
+        criteria.createCriteria().andRuleIdEqualTo(ruleId);
         return mapper.selectByExample(criteria);
     }
 

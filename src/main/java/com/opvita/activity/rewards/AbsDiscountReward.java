@@ -13,8 +13,7 @@ import java.math.BigDecimal;
  * Created by rd on 2015/5/15.
  */
 public abstract class AbsDiscountReward extends AbsReward {
-    @Autowired
-    private EsOrderDAO esOrderDAO;
+    @Autowired private EsOrderDAO esOrderDAO;
 
     abstract BigDecimal getDiscountResult(EsOrderDTO esOrder, RuleReward reward);
 

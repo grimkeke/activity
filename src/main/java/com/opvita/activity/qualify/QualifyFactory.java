@@ -24,14 +24,12 @@ public class QualifyFactory {
         }
     }
 
-    @Autowired
-    @Qualifier("nominalQualify")
+    @Autowired @Qualifier("nominalQualify")
     public void setNominalQualify(NominalQualify nominalQualify) {
         QualifyFactory.nominalQualify = nominalQualify;
     }
 
-    @Autowired
-    @Qualifier("paymentQualify")
+    @Autowired @Qualifier("paymentQualify")
     public void setPaymentQualify(PaymentQualify paymentQualify) {
         QualifyFactory.paymentQualify = paymentQualify;
     }

@@ -1,10 +1,5 @@
 package com.opvita.activity.daowrapper.impl;
 
-import com.opvita.activity.enums.RewardSituation;
-import com.opvita.activity.model.Activity;
-import com.opvita.activity.model.Rule;
-import com.opvita.activity.model.RuleReward;
-import com.opvita.activity.utils.ListUtils;
 import com.opvita.activity.common.Constants;
 import com.opvita.activity.dao.ActivityMapper;
 import com.opvita.activity.dao.MActivityDTOMapper;
@@ -14,6 +9,11 @@ import com.opvita.activity.daowrapper.RuleParticipationDAO;
 import com.opvita.activity.dto.MActivityDTO;
 import com.opvita.activity.dto.MActivityDTOCriteria;
 import com.opvita.activity.dto.MRuleParticipationDTO;
+import com.opvita.activity.enums.RewardSituation;
+import com.opvita.activity.model.Activity;
+import com.opvita.activity.model.Rule;
+import com.opvita.activity.model.RuleReward;
+import com.opvita.activity.utils.ListUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,10 +33,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ActivityDAOImpl implements ActivityDAO {
     private static Log log = LogFactory.getLog(ActivityDAOImpl.class);
 
-    @Autowired private ActivityMapper activityMapper;
-    @Autowired private MActivityDTOMapper mapper;
-    @Autowired private RuleParticipationDAO ruleParticipationDAO;
-    @Autowired private ActivityRuleDAO ruleDAO;
+    @Autowired
+    private ActivityMapper activityMapper;
+    @Autowired
+    private MActivityDTOMapper mapper;
+    @Autowired
+    private RuleParticipationDAO ruleParticipationDAO;
+    @Autowired
+    private ActivityRuleDAO ruleDAO;
 
     private static Map<String, List<Activity>> cache = new ConcurrentHashMap<String, List<Activity>>();
     private static Map<String, Boolean> cacheValidMap = new ConcurrentHashMap<String, Boolean>();
@@ -50,13 +54,17 @@ public class ActivityDAOImpl implements ActivityDAO {
 
     @Override
     public Activity getActivity(String activityId) {
+        return getActivity(activityId, false);
+    }
+
+    @Override
+    public Activity getActivity(String activityId, boolean withRules) {
         MActivityDTO dto = mapper.selectByPrimaryKey(activityId);
         Activity activity = Activity.fromDTO(dto);
 
-        if (activity != null) {
+        if (withRules && activity != null) {
             attachRules(activity);
         }
-
         return activity;
     }
 
@@ -90,7 +98,7 @@ public class ActivityDAOImpl implements ActivityDAO {
             return null;
         }
 
-        activityList = filterActivityListBySituation(activityList, situation);
+        activityList = filterActivitiesBySituation(activityList, situation);
 
         if (ListUtils.isNotEmpty(activityList)) {
             if (!cacheValid(mapKey)) {
@@ -104,7 +112,7 @@ public class ActivityDAOImpl implements ActivityDAO {
         return activityList;
     }
 
-    private List<Activity> filterActivityListBySituation(List<Activity> activityList, RewardSituation situation) {
+    private List<Activity> filterActivitiesBySituation(List<Activity> activityList, RewardSituation situation) {
         List<Activity> copyOfActivityList = new ArrayList(activityList.size());
         if (ListUtils.isNotEmpty(activityList)) {
             for (Activity activity : activityList) {
@@ -180,7 +188,10 @@ public class ActivityDAOImpl implements ActivityDAO {
             dto.setStatus(Constants.OFF);
         }
         mapper.insert(dto);
-        return Activity.fromDTO(dto);
+
+        Activity newActivity = Activity.fromDTO(dto);
+        log.info("save activity:" + newActivity);
+        return newActivity;
     }
 
     @Override
@@ -300,7 +311,7 @@ public class ActivityDAOImpl implements ActivityDAO {
 
         List<Activity> activityList = new ArrayList<Activity>();
         List<MActivityDTO> dtoList = mapper.selectByExample(activityDTOCriteria);
-        if (dtoList != null && dtoList.size() > 0) {
+        if (ListUtils.isNotEmpty(dtoList)) {
             for (MActivityDTO dto : dtoList) {
                 Activity activity = Activity.fromDTO(dto);
                 if (activity != null) {

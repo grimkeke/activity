@@ -89,18 +89,20 @@ public class Rule extends MActivityRuleDTO implements Comparator<Rule> {
     // 对订单执行规则校验，如果满足规则，则返回规则数据，不满足则返回null
     public Rule checkOrder(EsOrderInfoBean bean) {
         if (isValid()) {
-            if (StringUtils.isNotEmpty(getPayType())) {
-                // todo 根据支付类型
-            }
+            EsOrderDTO esOrder = bean.getEsOrderDTO();
 
-            // 根据资格和商品参与规则计算订单资格数值
-            BigDecimal orderValue = calculateOrderValue(bean);
+            // 匹配支付类型
+            if (StringUtils.isEmpty(getPayType()) ||
+                    getPayType().equals(esOrder.getPayChannel())) {
+                // 根据资格和商品参与规则计算订单资格数值
+                BigDecimal orderValue = calculateOrderValue(bean);
 
-            satisfied = orderValueSatisfy(orderValue);
-            log.info("satisfied:[" + satisfied + "] order:" + bean.getEsOrderDTO().getSn() + " value:" + orderValue  + " " + this);
+                satisfied = orderValueSatisfy(orderValue);
+                log.info("satisfied:[" + satisfied + "] order:" + esOrder.getSn() + " value:" + orderValue  + " " + this);
 
-            if (satisfied) {
-                return this;
+                if (satisfied) {
+                    return this;
+                }
             }
         }
         return null;
@@ -122,6 +124,7 @@ public class Rule extends MActivityRuleDTO implements Comparator<Rule> {
         return satisfy;
     }
 
+    // 根据资格计算订单金额
     public BigDecimal calculateOrderValue(EsOrderInfoBean bean) {
         EsOrderDTO esOrder = bean.getEsOrderDTO();
         List<EsOrderItemsDTOWithBLOBs> orderItemList = bean.getEsOrderItemsList();

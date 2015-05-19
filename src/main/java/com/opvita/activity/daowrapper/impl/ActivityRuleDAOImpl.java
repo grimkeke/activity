@@ -1,8 +1,5 @@
 package com.opvita.activity.daowrapper.impl;
 
-import com.opvita.activity.model.Rule;
-import com.opvita.activity.model.RuleReward;
-import com.opvita.activity.utils.ListUtils;
 import com.opvita.activity.dao.ActivityMapper;
 import com.opvita.activity.dao.MActivityRuleDTOMapper;
 import com.opvita.activity.daowrapper.ActivityRuleDAO;
@@ -10,13 +7,18 @@ import com.opvita.activity.daowrapper.ProductParticipationDAO;
 import com.opvita.activity.daowrapper.RuleParticipationDAO;
 import com.opvita.activity.daowrapper.RuleRewardDAO;
 import com.opvita.activity.dto.MActivityRuleDTO;
+import com.opvita.activity.dto.MActivityRuleDTOCriteria;
 import com.opvita.activity.dto.MProductParticipationDTO;
+import com.opvita.activity.model.Rule;
+import com.opvita.activity.model.RuleReward;
+import com.opvita.activity.utils.ListUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -26,12 +28,50 @@ import java.util.List;
 @Service
 public class ActivityRuleDAOImpl implements ActivityRuleDAO {
     private static Log log = LogFactory.getLog(ActivityRuleDAOImpl.class);
+    @Autowired
+    private MActivityRuleDTOMapper mapper;
+    @Autowired
+    private ActivityMapper activityMapper;
+    @Autowired
+    private RuleRewardDAO ruleRewardDAO;
+    @Autowired
+    private ProductParticipationDAO productParticipationDAO;
+    @Autowired
+    private RuleParticipationDAO ruleParticipationDAO;
 
-    @Autowired private MActivityRuleDTOMapper mapper;
-    @Autowired private ActivityMapper activityMapper;
-    @Autowired private RuleRewardDAO ruleRewardDAO;
-    @Autowired private ProductParticipationDAO productParticipationDAO;
-    @Autowired private RuleParticipationDAO ruleParticipationDAO;
+    @Override
+    public List<Rule> getRules(List<String> ruleIds) {
+        List<Rule> ruleList = null;
+
+        MActivityRuleDTOCriteria criteria = new MActivityRuleDTOCriteria();
+        criteria.createCriteria().andIdIn(ruleIds);
+
+        List<MActivityRuleDTO> dtoList = mapper.selectByExample(criteria);
+        if (ListUtils.isNotEmpty(dtoList)) {
+            ruleList = new ArrayList<Rule>(dtoList.size());
+
+            for (MActivityRuleDTO dto : dtoList) {
+                Rule rule = Rule.fromDTO(dto);
+                ruleList.add(attachRuleInfo(rule));
+            }
+            // 按规则优先级倒序排序
+            Collections.sort(ruleList, new Rule());
+        }
+        return ruleList;
+    }
+
+    private Rule attachRuleInfo(Rule rule) {
+        List<RuleReward> dataList = ruleRewardDAO.getReward(rule.getId());
+        rule.setRewardList(dataList);
+
+        List<MProductParticipationDTO> participationList = productParticipationDAO.getProductParticipation(rule.getId());
+        if (ListUtils.isNotEmpty(participationList)) {
+            for (MProductParticipationDTO participation : participationList) {
+                rule.addProductParticipate(participation.getProductId());
+            }
+        }
+        return rule;
+    }
 
     @Override
     public Rule getRule(String ruleId) {
@@ -39,18 +79,7 @@ public class ActivityRuleDAOImpl implements ActivityRuleDAO {
         if (rule == null) {
             return null;
         }
-
-        List<RuleReward> dataList = ruleRewardDAO.getReward(ruleId);
-        rule.setRewardList(dataList);
-
-        List<MProductParticipationDTO> participationList = productParticipationDAO.getProductParticipation(ruleId);
-        if (ListUtils.isNotEmpty(participationList)) {
-            for (MProductParticipationDTO participation : participationList) {
-                rule.addProductParticipate(participation.getProductId());
-            }
-        }
-
-        return rule;
+        return attachRuleInfo(rule);
     }
 
     @Override

@@ -19,8 +19,10 @@ import java.util.Set;
  */
 @Service
 public class ProductParticipationDAOImpl implements ProductParticipationDAO {
-    @Autowired private MProductParticipationDTOMapper mapper;
-    @Autowired private ActivityMapper activityMapper;
+    @Autowired
+    private MProductParticipationDTOMapper mapper;
+    @Autowired
+    private ActivityMapper activityMapper;
 
     @Override
     public List<MProductParticipationDTO> saveProductParticipation(String ruleId, Set<String> productSet) {

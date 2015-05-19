@@ -9,6 +9,9 @@ import java.util.List;
  * Created by rd on 2015/4/25.
  */
 public interface ActivityRuleDAO {
+    // 根据规则主键列表获取一组规则，并按优先级倒序排序
+    public List<Rule> getRules(List<String> ruleIds);
+
     // 根据规则主键获取规则
     public Rule getRule(String ruleId);
     public Rule getRuleOnly(String ruleId);

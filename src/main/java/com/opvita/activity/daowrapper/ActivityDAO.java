@@ -12,6 +12,7 @@ import java.util.List;
 public interface ActivityDAO {
     // 根据活动id（主键）获取活动信息
     public Activity getActivity(String activityId);
+    public Activity getActivity(String activityId, boolean withRules);
 
     // (仅测试和类内部使用)获取一个商户下的活动列表（包含活动参与规则）已按优先级倒序排序
     @Deprecated

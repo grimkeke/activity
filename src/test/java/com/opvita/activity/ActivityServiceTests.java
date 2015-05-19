@@ -3,6 +3,7 @@ package com.opvita.activity;
 import com.opvita.activity.common.Constants;
 import com.opvita.activity.daowrapper.ActivityDAO;
 import com.opvita.activity.daowrapper.ActivityRuleDAO;
+import com.opvita.activity.daowrapper.RuleParticipationDAO;
 import com.opvita.activity.enums.RewardSituation;
 import com.opvita.activity.model.Activity;
 import com.opvita.activity.model.EsOrderInfoBean;
@@ -32,6 +33,7 @@ public class ActivityServiceTests extends RollbackableTest {
     @Autowired private ActivityService service;
     @Autowired private ActivityDAO activityDAO;
     @Autowired private ActivityRuleDAO ruleDAO;
+    @Autowired private RuleParticipationDAO ruleParticipationDAO;
     @Autowired private WapPayService wapPayService;
 
     private String issuerId = "HFBD";
@@ -39,7 +41,7 @@ public class ActivityServiceTests extends RollbackableTest {
     @Test
     public void test_execute_activity() {
 //        String outTradeNo = "1431669335008173918"; // 800
-        String outTradeNo = "1431677343443808520"; // 600
+        String outTradeNo = "1431677343443808520"; // 500
         EsOrderInfoBean bean = wapPayService.getEsOrderInfoBySn(outTradeNo);
         service.executeActivity(bean, RewardSituation.BEFORE_MAKE_ORDER);
         service.executeActivity(bean, RewardSituation.AFTER_PAY_SUCCESS);
@@ -51,14 +53,29 @@ public class ActivityServiceTests extends RollbackableTest {
     }
 
     @Test
+    public void test_execute_rules() {
+        List<String> ruleIds = new ArrayList<String>() {{
+            add("0000000174");
+            add("0000000175");
+            add("0000000176");
+            add("0000000177");
+        }};
+
+        String outTradeNo = "1431677343443808520"; // 500
+        EsOrderInfoBean bean = wapPayService.getEsOrderInfoBySn(outTradeNo);
+
+        service.executeRules(bean, ruleIds);
+    }
+
+    @Test
     public void test_check_order() {
-        String outTradeNo = "1431677343443808520"; // 600
+        String outTradeNo = "1431677343443808520";
         EsOrderInfoBean bean = wapPayService.getEsOrderInfoBySn(outTradeNo);
 
         List<Activity> executorList = service.getSatisfiedActivities(bean, RewardSituation.BEFORE_MAKE_ORDER);
         log.info(executorList);
 
-        log.info("##### test get from cache #######");
+        log.info("##### test get from " + RewardSituation.AFTER_PAY_SUCCESS + " #######");
         executorList = service.getSatisfiedActivities(bean, RewardSituation.AFTER_PAY_SUCCESS);
         log.info(executorList);
     }
@@ -248,7 +265,7 @@ public class ActivityServiceTests extends RollbackableTest {
     // 删除一个活动以及所有规则
     @Test
     public void test_remove_activity() {
-        String[] activityIds = new String[] {"0000000123"};
+        String[] activityIds = new String[] {"0000000141", "0000000142", "0000000143"};
         for (String activityId : activityIds) {
             activityDAO.removeActivity(activityId);
         }
@@ -299,16 +316,17 @@ public class ActivityServiceTests extends RollbackableTest {
         }
     }
 
-    // 测试分别保存活动和规则，然后进行关联(暂时不支持此模式)
+    // 测试分别保存活动和规则，然后进行关联
     @Deprecated
     @Test
     public void test_activity_save_rule_save_and_finally_attach() {
+        String issuerId = "BYJK";
         Activity activity = new Activity();
         activity.setIssuerId(issuerId);
         activity.setTitle("测试互斥活动");
         activity.setRemark("此活动不与其他活动共享");
         activity.setStatus(Constants.ON);
-        activity.setValidStart(newDay(0));
+        activity.setValidStart(newDay(-7));
         activity.setValidEnd(newDay(7));
         activity.setMutex(Constants.ON);
         activity.setPriority(new BigDecimal(100));
@@ -318,8 +336,10 @@ public class ActivityServiceTests extends RollbackableTest {
         rule1.setIssuerId(issuerId);
         rule1.setStatus(Constants.ON);
         rule1.setQualification(Qualify.NOMINAL);
-        rule1.setMutex(Constants.OFF);
+        rule1.setMutex(Constants.ON);
         rule1.setPriority(new BigDecimal(88));
+        rule1.setSectionBegin(Long.valueOf(300));
+        rule1.setSectionEnd(Long.valueOf(600));
         rule1.setRewardList(new ArrayList<RuleReward>() {{
             add(RuleReward.newProductReward("15413900", 10000, 1));
         }});
@@ -329,12 +349,16 @@ public class ActivityServiceTests extends RollbackableTest {
         rule2.setIssuerId(issuerId);
         rule2.setStatus(Constants.ON);
         rule2.setQualification(Qualify.NOMINAL);
-        rule2.setMutex(Constants.OFF);
-        rule2.setPriority(new BigDecimal(88));
+        rule2.setMutex(Constants.ON);
+        rule2.setPriority(new BigDecimal(90));
+        rule2.setSectionBegin(Long.valueOf(600));
         rule2.setRewardList(new ArrayList<RuleReward>() {{
             add(RuleReward.newProductReward("15413901", 10000, 1));
         }});
         Rule newRule2 = ruleDAO.saveRule(rule2);
+
+        ruleParticipationDAO.saveRuleParticipation(newActivity.getId(), newRule1.getId());
+        ruleParticipationDAO.saveRuleParticipation(newActivity.getId(), newRule2.getId());
     }
 
     // 测试删除规则、规则奖励数据、规则商品参与信息、同时也要删除所有引用了该规则的活动参与数据

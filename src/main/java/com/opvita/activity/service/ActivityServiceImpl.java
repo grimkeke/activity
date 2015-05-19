@@ -1,22 +1,22 @@
 package com.opvita.activity.service;
 
-import com.opvita.activity.enums.RewardSituation;
-import com.opvita.activity.model.*;
-import com.opvita.activity.utils.ListUtils;
 import com.opvita.activity.daowrapper.ActivityDAO;
-import com.opvita.activity.daowrapper.RewardLogDAO;
-import com.opvita.activity.daowrapper.RuleRewardDAO;
+import com.opvita.activity.daowrapper.ActivityRuleDAO;
+import com.opvita.activity.daowrapper.RuleParticipationDAO;
 import com.opvita.activity.dto.EsOrderDTO;
+import com.opvita.activity.dto.MRuleParticipationDTO;
+import com.opvita.activity.enums.RewardSituation;
+import com.opvita.activity.model.Activity;
 import com.opvita.activity.model.EsOrderInfoBean;
-import org.apache.commons.lang.NotImplementedException;
+import com.opvita.activity.model.Rule;
+import com.opvita.activity.model.RuleReward;
+import com.opvita.activity.utils.ListUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by rd on 2015/4/27.
@@ -25,61 +25,47 @@ import java.util.List;
 public class ActivityServiceImpl implements ActivityService {
     private static Log log = LogFactory.getLog(ActivityServiceImpl.class);
 
-    @Autowired
-    private ActivityDAO activityDAO;
-    @Autowired
-    private RewardLogDAO rewardLogDAO;
-    @Autowired
-    private RuleRewardDAO ruleRewardDAO;
+    @Autowired private ActivityDAO activityDAO;
+    @Autowired private ActivityRuleDAO ruleDAO;
+    @Autowired private RuleParticipationDAO ruleParticipationDAO;
 
     @Override
     public void executeActivity(EsOrderInfoBean bean, RewardSituation situation) {
         List<Activity> satisfiedActivityList = getSatisfiedActivities(bean, situation);
-        if (ListUtils.isNotEmpty(satisfiedActivityList)) {
-            for (Activity satisfiedActivity : satisfiedActivityList) {
+        executeActivityList(bean, satisfiedActivityList);
+    }
+
+    private void executeActivityList(EsOrderInfoBean bean, List<Activity> activityList) {
+        if (ListUtils.isNotEmpty(activityList)) {
+            for (Activity satisfiedActivity : activityList) {
 
                 List<Rule> satisfiedRuleList = satisfiedActivity.getRules();
-                if (ListUtils.isNotEmpty(satisfiedRuleList)) {
-                    for (Rule satisfiedRule : satisfiedRuleList) {
-
-                        List<RuleReward> rewardList = satisfiedRule.getRewardList();
-                        if (ListUtils.isNotEmpty(rewardList)) {
-                            for (RuleReward reward : rewardList) {
-                                log.debug("satisfied reward:" + reward);
-
-                                // 查询该用户已奖励多少次
-                                int rewardCount = rewardLogDAO.getRewardCount(bean, reward);
-
-                                // 奖励次数未超限才能进行奖励
-                                if (!reward.exceedLimit(rewardCount)) {
-                                    // 记录奖励日志，初始状态为待奖励
-                                    RewardLog rewardLog = rewardLogDAO.saveRewardLog(bean, reward);
-                                    log.info("log reward start. " + rewardLog);
-
-                                    // 更新当前奖励数据
-                                    ruleRewardDAO.increaseCurrentReward(reward);
-
-                                    // 执行奖励
-                                    if (reward.executeReward(satisfiedRule, bean)) {
-                                        // 奖励执行成功后更新奖励日志
-                                        rewardLogDAO.completeRewardLog(rewardLog);
-                                        log.info("log reward complete. " + rewardLog.getId());
-                                    }
-                                }
-                            }
-                        }
-
-                        // 规则互斥
-                        if (satisfiedRule.isMutex()) {
-                            log.info("stop reward at rule:" + satisfiedRule);
-                            break;
-                        }
-                    }
-                }
+                executeRuleList(bean, satisfiedRuleList);
 
                 // 活动互斥
                 if (satisfiedActivity.isMutex()) {
-                    log.info("stop reward at activity:" + satisfiedActivity);
+                    log.info("stop reward at activity:" + satisfiedActivity.getId());
+                    break;
+                }
+            }
+        }
+    }
+
+    private void executeRuleList(EsOrderInfoBean bean, List<Rule> ruleList) {
+        if (ListUtils.isNotEmpty(ruleList)) {
+            for (Rule satisfiedRule : ruleList) {
+
+                List<RuleReward> rewardList = satisfiedRule.getRewardList();
+                if (ListUtils.isNotEmpty(rewardList)) {
+                    for (RuleReward reward : rewardList) {
+                        log.debug("may satisfy reward:" + reward.getId());
+                        reward.executeReward(satisfiedRule, bean);
+                    }
+                }
+
+                // 规则互斥
+                if (satisfiedRule.isMutex()) {
+                    log.info("stop reward at rule:" + satisfiedRule.getId());
                     break;
                 }
             }
@@ -88,12 +74,17 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public List<Activity> getSatisfiedActivities(EsOrderInfoBean bean, RewardSituation situation) {
-        List<Activity> satisfiedActivityList = new ArrayList<Activity>();
-
         EsOrderDTO esOrder = bean.getEsOrderDTO();
         String issuerId = esOrder.getIssuerId();
 
         List<Activity> activityList = activityDAO.getActivities(issuerId, situation);
+        return filterSatisfiedActivities(bean, activityList);
+    }
+
+    // 筛选出订单满足的活动
+    private List<Activity> filterSatisfiedActivities(EsOrderInfoBean bean, List<Activity> activityList) {
+        List<Activity> satisfiedActivityList = new ArrayList<Activity>();
+
         if (ListUtils.isNotEmpty(activityList)) {
             Collections.sort(activityList, new Activity());
 
@@ -110,8 +101,40 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public void executeRules(List<String> ruleIdList, EsOrderInfoBean bean) {
-        // todo implement
-        throw new NotImplementedException("not implement yet!");
+    public void executeRules(EsOrderInfoBean bean, List<String> ruleIds) {
+        List<Rule> ruleList = ruleDAO.getRules(ruleIds);
+        List<Activity> activityList = arrangeActivityList(ruleList);
+        List<Activity> satisfiedActivityList = filterSatisfiedActivities(bean, activityList);
+        executeActivityList(bean, satisfiedActivityList);
+    }
+
+    // 通过rule列表反向组成activityList
+    private List<Activity> arrangeActivityList(List<Rule> ruleList) {
+        if (ListUtils.isEmpty(ruleList)) {
+            return null;
+        }
+
+        Map<String, Activity> activityMap = new HashMap<String, Activity>();
+        for (Rule rule : ruleList) {
+            List<MRuleParticipationDTO> participationList = ruleParticipationDAO.getActivityParticipation(rule.getId());
+            if (ListUtils.isNotEmpty(participationList)) {
+                for (MRuleParticipationDTO participation : participationList) {
+                    String activityId = participation.getActivityId();
+
+                    Activity activity = activityMap.get(activityId);
+                    if (activity == null) {
+                        activity = activityDAO.getActivity(activityId, false);
+                        activityMap.put(activityId, activity);
+                    }
+                    activity.addRule(rule);
+                }
+            }
+        }
+
+        List<Activity> activityList = new ArrayList<Activity>();
+        for (String key : activityMap.keySet()) {
+            activityList.add(activityMap.get(key));
+        }
+        return activityList;
     }
 }

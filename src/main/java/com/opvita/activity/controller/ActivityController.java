@@ -1,8 +1,8 @@
 package com.opvita.activity.controller;
 
+import com.opvita.activity.daowrapper.ActivityDAO;
 import com.opvita.activity.model.Activity;
 import com.opvita.activity.model.Rule;
-import com.opvita.activity.daowrapper.ActivityDAO;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +23,7 @@ import java.util.List;
 public class ActivityController {
     private static Log log = LogFactory.getLog(ActivityController.class);
 
-    @Autowired
-    private ActivityDAO activityDAO;
+    @Autowired private ActivityDAO activityDAO;
 
     @RequestMapping(value = "/dashboard", method = RequestMethod.GET)
     public String dashboard(HttpServletRequest request, ModelMap modelMap) {

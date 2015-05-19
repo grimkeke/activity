@@ -2,6 +2,7 @@ package com.opvita.activity.rewards;
 
 import com.opvita.activity.daowrapper.ProductInfoDAO;
 import com.opvita.activity.dto.EsOrderDTO;
+import com.opvita.activity.dto.EsOrderItemsDTOWithBLOBs;
 import com.opvita.activity.model.EsOrderInfoBean;
 import com.opvita.activity.model.Rule;
 import com.opvita.activity.model.RuleReward;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Created by rd on 2015/4/27.
@@ -25,6 +27,7 @@ public class NewCardReward extends AbsReward {
     @Override
     boolean doReward(EsOrderInfoBean bean, Rule rule, RuleReward reward) {
         EsOrderDTO esOrder = bean.getEsOrderDTO();
+        List<EsOrderItemsDTOWithBLOBs> esOrderItemList = bean.getEsOrderItemsList();
 
         log.info(String.format("order:%s satisfy reward:%s due to %s %s, system will bind card to user:%s",
                 esOrder.getSn(), reward.getId(), reward.getRewardType(), reward.getRewardProduct(),

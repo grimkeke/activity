@@ -1,16 +1,16 @@
 package com.opvita.activity.daowrapper.impl;
 
-import com.opvita.activity.enums.RewardLogStatus;
-import com.opvita.activity.model.RewardLog;
-import com.opvita.activity.model.RuleReward;
-import com.opvita.activity.utils.ListUtils;
 import com.opvita.activity.dao.ActivityMapper;
 import com.opvita.activity.dao.MRewardLogDTOMapper;
 import com.opvita.activity.daowrapper.RewardLogDAO;
 import com.opvita.activity.dto.EsOrderDTO;
 import com.opvita.activity.dto.MRewardLogDTO;
 import com.opvita.activity.dto.MRewardLogDTOCriteria;
+import com.opvita.activity.enums.RewardLogStatus;
 import com.opvita.activity.model.EsOrderInfoBean;
+import com.opvita.activity.model.RewardLog;
+import com.opvita.activity.model.RuleReward;
+import com.opvita.activity.utils.ListUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +27,10 @@ import java.util.List;
 public class RewardLogDAOImpl implements RewardLogDAO {
     private static Log log = LogFactory.getLog(RewardLogDAOImpl.class);
 
-    @Autowired private MRewardLogDTOMapper mapper;
-    @Autowired private ActivityMapper activityMapper;
+    @Autowired
+    private MRewardLogDTOMapper mapper;
+    @Autowired
+    private ActivityMapper activityMapper;
 
     @Override
     public RewardLog saveRewardLog(EsOrderInfoBean bean, RuleReward reward) {

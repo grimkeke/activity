@@ -28,20 +28,17 @@ public class RewardFactory {
         }
     }
 
-    @Autowired
-    @Qualifier("newCardReward")
+    @Autowired @Qualifier("newCardReward")
     public void setNewCardReward(NewCardReward newCardReward) {
         RewardFactory.newCardReward = newCardReward;
     }
 
-    @Autowired
-    @Qualifier("discountReward")
+    @Autowired @Qualifier("discountReward")
     public void setDiscountReward(DiscountReward discountReward) {
         RewardFactory.discountReward = discountReward;
     }
 
-    @Autowired
-    @Qualifier("percentageReward")
+    @Autowired @Qualifier("percentageReward")
     public void setPercentageReward(PercentageReward percentageReward) {
         RewardFactory.percentageReward = percentageReward;
     }

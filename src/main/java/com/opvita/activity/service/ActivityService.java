@@ -19,5 +19,5 @@ public interface ActivityService {
 
     // 对于冲突的规则，由用户选择执行哪些规则（未实现）
     // 根据规则id对订单执行规则，如果同一活动中存在不可共享的规则，或者存在多个不可共享的活动，则返回错误
-    public void executeRules(List<String> ruleIdList, EsOrderInfoBean bean);
+    public void executeRules(EsOrderInfoBean bean, List<String> ruleIds);
 }

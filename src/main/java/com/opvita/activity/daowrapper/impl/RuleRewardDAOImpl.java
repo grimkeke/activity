@@ -1,14 +1,14 @@
 package com.opvita.activity.daowrapper.impl;
 
-import com.opvita.activity.model.Rule;
-import com.opvita.activity.model.RuleReward;
-import com.opvita.activity.utils.ListUtils;
 import com.opvita.activity.dao.ActivityMapper;
 import com.opvita.activity.dao.MRuleRewardDTOMapper;
 import com.opvita.activity.daowrapper.ActivityRuleDAO;
 import com.opvita.activity.daowrapper.RuleRewardDAO;
 import com.opvita.activity.dto.MRuleRewardDTO;
 import com.opvita.activity.dto.MRuleRewardDTOCriteria;
+import com.opvita.activity.model.Rule;
+import com.opvita.activity.model.RuleReward;
+import com.opvita.activity.utils.ListUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,9 +22,12 @@ import java.util.List;
  */
 @Service
 public class RuleRewardDAOImpl implements RuleRewardDAO {
-    @Autowired private MRuleRewardDTOMapper mapper;
-    @Autowired private ActivityMapper activityMapper;
-    @Autowired private ActivityRuleDAO ruleDAO;
+    @Autowired
+    private MRuleRewardDTOMapper mapper;
+    @Autowired
+    private ActivityMapper activityMapper;
+    @Autowired
+    private ActivityRuleDAO ruleDAO;
 
     @Override
     public RuleReward saveReward(RuleReward data) {

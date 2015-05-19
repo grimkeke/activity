@@ -1,8 +1,8 @@
 package com.opvita.activity.daowrapper;
 
+import com.opvita.activity.model.EsOrderInfoBean;
 import com.opvita.activity.model.RewardLog;
 import com.opvita.activity.model.RuleReward;
-import com.opvita.activity.model.EsOrderInfoBean;
 
 import java.util.List;
 
