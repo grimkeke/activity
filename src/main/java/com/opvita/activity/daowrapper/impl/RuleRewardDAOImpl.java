@@ -1,14 +1,15 @@
 package com.opvita.activity.daowrapper.impl;
 
+import com.opvita.activity.model.Rule;
+import com.opvita.activity.model.RuleReward;
+import com.opvita.activity.utils.ListUtils;
+import com.opvita.activity.common.Constants;
 import com.opvita.activity.dao.ActivityMapper;
 import com.opvita.activity.dao.MRuleRewardDTOMapper;
 import com.opvita.activity.daowrapper.ActivityRuleDAO;
 import com.opvita.activity.daowrapper.RuleRewardDAO;
 import com.opvita.activity.dto.MRuleRewardDTO;
 import com.opvita.activity.dto.MRuleRewardDTOCriteria;
-import com.opvita.activity.model.Rule;
-import com.opvita.activity.model.RuleReward;
-import com.opvita.activity.utils.ListUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,12 +23,9 @@ import java.util.List;
  */
 @Service
 public class RuleRewardDAOImpl implements RuleRewardDAO {
-    @Autowired
-    private MRuleRewardDTOMapper mapper;
-    @Autowired
-    private ActivityMapper activityMapper;
-    @Autowired
-    private ActivityRuleDAO ruleDAO;
+    @Autowired private MRuleRewardDTOMapper mapper;
+    @Autowired private ActivityMapper activityMapper;
+    @Autowired private ActivityRuleDAO ruleDAO;
 
     @Override
     public RuleReward saveReward(RuleReward data) {
@@ -43,7 +41,7 @@ public class RuleRewardDAOImpl implements RuleRewardDAO {
     public List<RuleReward> getReward(String ruleId) {
         List<RuleReward> dataList = null;
         MRuleRewardDTOCriteria criteria = new MRuleRewardDTOCriteria();
-        criteria.createCriteria().andRuleIdEqualTo(ruleId);
+        criteria.createCriteria().andRuleIdEqualTo(ruleId).andStatusEqualTo(Constants.ON);
 
         List<MRuleRewardDTO> dtoList = mapper.selectByExample(criteria);
         if (ListUtils.isNotEmpty(dtoList)) {
@@ -67,6 +65,16 @@ public class RuleRewardDAOImpl implements RuleRewardDAO {
         MRuleRewardDTOCriteria criteria = new MRuleRewardDTOCriteria();
         criteria.createCriteria().andRuleIdEqualTo(ruleId);
         return mapper.deleteByExample(criteria);
+    }
+
+    @Override
+    public int invalidateReward(String ruleId) {
+        MRuleRewardDTOCriteria criteria = new MRuleRewardDTOCriteria();
+        criteria.createCriteria().andRuleIdEqualTo(ruleId);
+
+        MRuleRewardDTO dto = new MRuleRewardDTO();
+        dto.setStatus(Constants.OFF);
+        return mapper.updateByExampleSelective(dto, criteria);
     }
 
     @Override

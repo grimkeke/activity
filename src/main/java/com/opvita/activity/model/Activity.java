@@ -1,8 +1,9 @@
 package com.opvita.activity.model;
 
+import com.opvita.activity.utils.ListUtils;
 import com.opvita.activity.common.Constants;
 import com.opvita.activity.dto.MActivityDTO;
-import com.opvita.activity.utils.ListUtils;
+import com.opvita.activity.model.EsOrderInfoBean;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

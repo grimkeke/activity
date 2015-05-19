@@ -1,5 +1,9 @@
 package com.opvita.activity.daowrapper.impl;
 
+import com.opvita.activity.model.Rule;
+import com.opvita.activity.model.RuleReward;
+import com.opvita.activity.utils.ListUtils;
+import com.opvita.activity.common.Constants;
 import com.opvita.activity.dao.ActivityMapper;
 import com.opvita.activity.dao.MActivityRuleDTOMapper;
 import com.opvita.activity.daowrapper.ActivityRuleDAO;
@@ -9,9 +13,7 @@ import com.opvita.activity.daowrapper.RuleRewardDAO;
 import com.opvita.activity.dto.MActivityRuleDTO;
 import com.opvita.activity.dto.MActivityRuleDTOCriteria;
 import com.opvita.activity.dto.MProductParticipationDTO;
-import com.opvita.activity.model.Rule;
-import com.opvita.activity.model.RuleReward;
-import com.opvita.activity.utils.ListUtils;
+import com.opvita.activity.dto.MRuleParticipationDTO;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,16 +30,11 @@ import java.util.List;
 @Service
 public class ActivityRuleDAOImpl implements ActivityRuleDAO {
     private static Log log = LogFactory.getLog(ActivityRuleDAOImpl.class);
-    @Autowired
-    private MActivityRuleDTOMapper mapper;
-    @Autowired
-    private ActivityMapper activityMapper;
-    @Autowired
-    private RuleRewardDAO ruleRewardDAO;
-    @Autowired
-    private ProductParticipationDAO productParticipationDAO;
-    @Autowired
-    private RuleParticipationDAO ruleParticipationDAO;
+    @Autowired private MActivityRuleDTOMapper mapper;
+    @Autowired private ActivityMapper activityMapper;
+    @Autowired private RuleRewardDAO ruleRewardDAO;
+    @Autowired private ProductParticipationDAO productParticipationDAO;
+    @Autowired private RuleParticipationDAO ruleParticipationDAO;
 
     @Override
     public List<Rule> getRules(List<String> ruleIds) {
@@ -122,14 +119,37 @@ public class ActivityRuleDAOImpl implements ActivityRuleDAO {
 
     @Override
     public void detachRule(String activityId, String ruleId) {
+        checkActivityAndRuleInput(activityId, ruleId);
+
+        removeRule(ruleId);
+
+        ruleParticipationDAO.removeRuleParticipation(activityId, ruleId);
+        log.info("remove rule:" + ruleId + " participation from activity:" + activityId);
+    }
+
+    private void checkActivityAndRuleInput(String activityId, String ruleId) {
         if (activityId == null) {
             throw new NullPointerException("activityId should not be null!");
         }
 
-        removeRule(ruleId);
+        if (ruleId == null) {
+            throw new NullPointerException("ruleId should not be null!");
+        }
 
-        int removedCount = ruleParticipationDAO.removeRuleParticipation(activityId, ruleId);
-        log.info("remove " + removedCount + " participation from activity:" + activityId + " for ruleId:" + ruleId);
+        boolean valid = ruleParticipationDAO.isValidActivityAndRule(activityId, ruleId);
+        if (!valid) {
+            throw new IllegalStateException("invalid activity:" + activityId + " and rule:" + ruleId + " pair!");
+        }
+    }
+
+    @Override
+    public void unlinkRule(String activityId, String ruleId) {
+        checkActivityAndRuleInput(activityId, ruleId);
+
+        invalidateRule(ruleId);
+
+        ruleParticipationDAO.invalidateRuleParticipation(activityId, ruleId);
+        log.info("invalidate rule:" + ruleId + " participation from activity:" + activityId);
     }
 
     @Override
@@ -145,7 +165,28 @@ public class ActivityRuleDAOImpl implements ActivityRuleDAO {
         log.info("remove " + removedCount + " product participation for ruleId:" + ruleId);
 
         removedCount = ruleRewardDAO.removeReward(ruleId);
-        log.info("remove " + removedCount + " rule data for ruleId:" + ruleId);
+        log.info("remove " + removedCount + " reward for ruleId:" + ruleId);
+    }
+
+    @Override
+    public void invalidateRule(String ruleId) {
+        if (ruleId == null) {
+            throw new NullPointerException("ruleId should not be null!");
+        }
+
+        MActivityRuleDTO dto = mapper.selectByPrimaryKey(ruleId);
+        if (dto == null) {
+            throw new IllegalStateException("ruleId:" + ruleId + " is not exist!");
+        }
+        dto.setStatus(Constants.OFF);
+        mapper.updateByPrimaryKey(dto);
+        log.info("invalidate rule:" + ruleId);
+
+        int invalidateCount = productParticipationDAO.invalidateProductParticipation(ruleId);
+        log.info("invalidate " + invalidateCount + " product participation for ruleId:" + ruleId);
+
+        invalidateCount = ruleRewardDAO.invalidateReward(ruleId);
+        log.info("invalidate " + invalidateCount + " reward for ruleId:" + ruleId);
     }
 
     private Rule doSave(Rule rule) {

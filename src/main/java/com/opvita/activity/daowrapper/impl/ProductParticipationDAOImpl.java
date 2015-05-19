@@ -19,10 +19,8 @@ import java.util.Set;
  */
 @Service
 public class ProductParticipationDAOImpl implements ProductParticipationDAO {
-    @Autowired
-    private MProductParticipationDTOMapper mapper;
-    @Autowired
-    private ActivityMapper activityMapper;
+    @Autowired private MProductParticipationDTOMapper mapper;
+    @Autowired private ActivityMapper activityMapper;
 
     @Override
     public List<MProductParticipationDTO> saveProductParticipation(String ruleId, Set<String> productSet) {
@@ -53,6 +51,16 @@ public class ProductParticipationDAOImpl implements ProductParticipationDAO {
         MProductParticipationDTOCriteria criteria = new MProductParticipationDTOCriteria();
         criteria.createCriteria().andRuleIdEqualTo(ruleId);
         return mapper.deleteByExample(criteria);
+    }
+
+    @Override
+    public int invalidateProductParticipation(String ruleId) {
+        MProductParticipationDTOCriteria criteria = new MProductParticipationDTOCriteria();
+        criteria.createCriteria().andRuleIdEqualTo(ruleId);
+
+        MProductParticipationDTO dto = new MProductParticipationDTO();
+        dto.setStatus(Constants.OFF);
+        return mapper.updateByExampleSelective(dto, criteria);
     }
 
     private MProductParticipationDTO doSave(String ruleId, String productId) {

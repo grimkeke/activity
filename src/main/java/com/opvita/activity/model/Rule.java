@@ -1,11 +1,12 @@
 package com.opvita.activity.model;
 
+import com.opvita.activity.qualify.Qualify;
+import com.opvita.activity.qualify.QualifyFactory;
 import com.opvita.activity.common.Constants;
 import com.opvita.activity.dto.EsOrderDTO;
 import com.opvita.activity.dto.EsOrderItemsDTOWithBLOBs;
 import com.opvita.activity.dto.MActivityRuleDTO;
-import com.opvita.activity.qualify.Qualify;
-import com.opvita.activity.qualify.QualifyFactory;
+import com.opvita.activity.model.EsOrderInfoBean;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

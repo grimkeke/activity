@@ -22,10 +22,17 @@ public interface ActivityRuleDAO {
     // 保存规则，并且保存规则数据
     public Rule saveRule(Rule rule, List<RuleReward> dataList);
 
-    // 删除活动和规则的关联关系，同时删除规则，(调用removeRule)
+    // 物理删除活动和规则的关联关系，同时删除规则，(调用removeRule)
+    // 推荐使用软删除
     public void detachRule(String activityId, String ruleId);
 
+    // 软删除活动和规则的关联关系，同时删除规则，(调用invalidateRule)
+    public void unlinkRule(String activityId, String ruleId);
+
     // 根据规则id删除规则，同时删除商品参与规则、规则数据
+    // 推荐使用软删除
     public void removeRule(String ruleId);
 
+    // 根据规则id软删除规则，操作表同removeRule
+    public void invalidateRule(String ruleId);
 }

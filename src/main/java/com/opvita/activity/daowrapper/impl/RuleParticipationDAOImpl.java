@@ -1,5 +1,6 @@
 package com.opvita.activity.daowrapper.impl;
 
+import com.opvita.activity.utils.ListUtils;
 import com.opvita.activity.common.Constants;
 import com.opvita.activity.dao.ActivityMapper;
 import com.opvita.activity.dao.MRuleParticipationDTOMapper;
@@ -17,10 +18,8 @@ import java.util.List;
  */
 @Service
 public class RuleParticipationDAOImpl implements RuleParticipationDAO {
-    @Autowired
-    private MRuleParticipationDTOMapper mapper;
-    @Autowired
-    private ActivityMapper activityMapper;
+    @Autowired private MRuleParticipationDTOMapper mapper;
+    @Autowired private ActivityMapper activityMapper;
 
     @Override
     public MRuleParticipationDTO saveRuleParticipation(String activityId, String ruleId) {
@@ -50,6 +49,13 @@ public class RuleParticipationDAOImpl implements RuleParticipationDAO {
     }
 
     @Override
+    public boolean isValidActivityAndRule(String activityId, String ruleId) {
+        MRuleParticipationDTOCriteria criteria = new MRuleParticipationDTOCriteria();
+        criteria.createCriteria().andActivityIdEqualTo(activityId).andRuleIdEqualTo(ruleId);
+        return ListUtils.isNotEmpty(mapper.selectByExample(criteria));
+    }
+
+    @Override
     public int clearRuleParticipation(String activityId) {
         MRuleParticipationDTOCriteria criteria = new MRuleParticipationDTOCriteria();
         criteria.createCriteria().andActivityIdEqualTo(activityId);
@@ -57,9 +63,29 @@ public class RuleParticipationDAOImpl implements RuleParticipationDAO {
     }
 
     @Override
+    public int invalidateRuleParticipation(String activityId) {
+        MRuleParticipationDTOCriteria criteria = new MRuleParticipationDTOCriteria();
+        criteria.createCriteria().andActivityIdEqualTo(activityId);
+
+        MRuleParticipationDTO dto = new MRuleParticipationDTO();
+        dto.setStatus(Constants.OFF);
+        return mapper.updateByExampleSelective(dto, criteria);
+    }
+
+    @Override
     public int removeRuleParticipation(String activityId, String ruleId) {
         MRuleParticipationDTOCriteria criteria = new MRuleParticipationDTOCriteria();
         criteria.createCriteria().andActivityIdEqualTo(activityId).andRuleIdEqualTo(ruleId);
         return mapper.deleteByExample(criteria);
+    }
+
+    @Override
+    public int invalidateRuleParticipation(String activityId, String ruleId) {
+        MRuleParticipationDTOCriteria criteria = new MRuleParticipationDTOCriteria();
+        criteria.createCriteria().andActivityIdEqualTo(activityId).andRuleIdEqualTo(ruleId);
+
+        MRuleParticipationDTO dto = new MRuleParticipationDTO();
+        dto.setStatus(Constants.OFF);
+        return mapper.updateByExampleSelective(dto, criteria);
     }
 }

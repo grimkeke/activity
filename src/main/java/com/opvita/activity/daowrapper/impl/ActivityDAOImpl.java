@@ -1,5 +1,10 @@
 package com.opvita.activity.daowrapper.impl;
 
+import com.opvita.activity.enums.RewardSituation;
+import com.opvita.activity.model.Activity;
+import com.opvita.activity.model.Rule;
+import com.opvita.activity.model.RuleReward;
+import com.opvita.activity.utils.ListUtils;
 import com.opvita.activity.common.Constants;
 import com.opvita.activity.dao.ActivityMapper;
 import com.opvita.activity.dao.MActivityDTOMapper;
@@ -9,11 +14,6 @@ import com.opvita.activity.daowrapper.RuleParticipationDAO;
 import com.opvita.activity.dto.MActivityDTO;
 import com.opvita.activity.dto.MActivityDTOCriteria;
 import com.opvita.activity.dto.MRuleParticipationDTO;
-import com.opvita.activity.enums.RewardSituation;
-import com.opvita.activity.model.Activity;
-import com.opvita.activity.model.Rule;
-import com.opvita.activity.model.RuleReward;
-import com.opvita.activity.utils.ListUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,14 +33,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ActivityDAOImpl implements ActivityDAO {
     private static Log log = LogFactory.getLog(ActivityDAOImpl.class);
 
-    @Autowired
-    private ActivityMapper activityMapper;
-    @Autowired
-    private MActivityDTOMapper mapper;
-    @Autowired
-    private RuleParticipationDAO ruleParticipationDAO;
-    @Autowired
-    private ActivityRuleDAO ruleDAO;
+    @Autowired private ActivityMapper activityMapper;
+    @Autowired private MActivityDTOMapper mapper;
+    @Autowired private RuleParticipationDAO ruleParticipationDAO;
+    @Autowired private ActivityRuleDAO ruleDAO;
 
     private static Map<String, List<Activity>> cache = new ConcurrentHashMap<String, List<Activity>>();
     private static Map<String, Boolean> cacheValidMap = new ConcurrentHashMap<String, Boolean>();
@@ -248,14 +244,14 @@ public class ActivityDAOImpl implements ActivityDAO {
             throw new IllegalStateException("activityId should not be null!");
         }
         mapper.deleteByPrimaryKey(activityId);
-        log.info("remove activity:" + activityId);
+        log.info("[start] remove activity:" + activityId);
 
         List<MRuleParticipationDTO> participationList = ruleParticipationDAO.getRuleParticipation(activityId);
         if (ListUtils.isNotEmpty(participationList)) {
             for (MRuleParticipationDTO participation : participationList) {
                 String ruleId = participation.getRuleId();
                 if (StringUtils.isNotEmpty(ruleId)) {
-                    // 仅删除规则，无需在此解除与活动的关联关系，clearRuleParticipation会统一清除
+                    // 仅物理删除规则，无需在此解除与活动的关联关系，clearRuleParticipation会统一清除
                     ruleDAO.removeRule(ruleId);
                     log.info("remove rule:" + ruleId + " for activity:" + activityId);
                 }
@@ -263,7 +259,38 @@ public class ActivityDAOImpl implements ActivityDAO {
         }
 
         int removedCount = ruleParticipationDAO.clearRuleParticipation(activityId);
-        log.info("remove " + removedCount + " rule participation for activity:" + activityId);
+        log.info("[end] remove " + removedCount + " rule participation for activity:" + activityId);
+    }
+
+    @Override
+    public void invalidateActivity(String activityId) {
+        if (activityId == null) {
+            throw new NullPointerException("activityId should not be null!");
+        }
+
+        MActivityDTO dto = mapper.selectByPrimaryKey(activityId);
+        if (dto == null) {
+            throw new IllegalStateException("activityId:" + activityId + " is not exist!");
+        }
+        // 逻辑删除activity
+        dto.setStatus(Constants.OFF);
+        mapper.updateByPrimaryKey(dto);
+        log.info("[start] invalidate activity:" + activityId);
+
+        List<MRuleParticipationDTO> participationList = ruleParticipationDAO.getRuleParticipation(activityId);
+        if (ListUtils.isNotEmpty(participationList)) {
+            for (MRuleParticipationDTO participation : participationList) {
+                String ruleId = participation.getRuleId();
+                if (StringUtils.isNotEmpty(ruleId)) {
+                    // 仅软删除规则，无需在此解除与活动的关联关系，invalidateRuleParticipation会统一清除
+                    ruleDAO.invalidateRule(ruleId);
+                    log.info("invalidate rule:" + ruleId + " for activity:" + activityId);
+                }
+            }
+        }
+
+        int invalidateCount = ruleParticipationDAO.invalidateRuleParticipation(activityId);
+        log.info("[end] invalidate " + invalidateCount + " rule participation for activity:" + activityId);
     }
 
     private Activity attachRules(Activity activity) {

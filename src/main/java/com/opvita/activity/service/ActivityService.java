@@ -1,10 +1,11 @@
 package com.opvita.activity.service;
 
-import com.opvita.activity.enums.RewardSituation;
 import com.opvita.activity.model.Activity;
+import com.opvita.activity.enums.RewardSituation;
 import com.opvita.activity.model.EsOrderInfoBean;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by rd on 2015/4/25.

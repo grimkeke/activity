@@ -18,9 +18,20 @@ public interface RuleParticipationDAO {
     // 获取一个规则参与了哪些活动
     public List<MRuleParticipationDTO> getActivityParticipation(String ruleId);
 
-    // 删除该活动下的所有规则参与
+    // 判断活动与规则是否匹配
+    public boolean isValidActivityAndRule(String activityId, String ruleId);
+
+    // 物理删除该活动下的所有规则参与
+    // 推荐使用软删除
     public int clearRuleParticipation(String activityId);
 
-    // 删除该活动下的此规则
+    // 软删除该活动下的所有规则参与
+    public int invalidateRuleParticipation(String activityId);
+
+    // 物理删除该活动下的此规则
+    // 推荐使用软删除
     public int removeRuleParticipation(String activityId, String ruleId);
+
+    // 软删除该活动下的此规则
+    public int invalidateRuleParticipation(String activityId, String ruleId);
 }

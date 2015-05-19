@@ -31,8 +31,12 @@ public interface ActivityDAO {
     public Activity attachRule(String activityId, Rule rule);
     public Activity attachRules(String activityId, List<Rule> ruleList);
 
-    // 根据活动id删除该活动，即删除活动、规则、规则参与、商品参与和规则数据
+    // 根据活动id物理删除该活动，即删除活动、规则、规则参与、商品参与和规则数据
+    // 推荐使用软删除
     public void removeActivity(String activityId);
+
+    // 根据活动id软删除，操作表同removeActivity方法
+    public void invalidateActivity(String activityId);
 
     // 使所有商户的活动缓存失效
     public void syncActivities();

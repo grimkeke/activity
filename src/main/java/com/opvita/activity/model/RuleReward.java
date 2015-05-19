@@ -1,9 +1,11 @@
 package com.opvita.activity.model;
 
-import com.opvita.activity.dto.MRuleRewardDTO;
 import com.opvita.activity.enums.RewardSituation;
 import com.opvita.activity.rewards.RewardFactory;
 import com.opvita.activity.rewards.Rewardable;
+import com.opvita.activity.common.Constants;
+import com.opvita.activity.dto.MRuleRewardDTO;
+import com.opvita.activity.model.EsOrderInfoBean;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -108,6 +110,7 @@ public class RuleReward extends MRuleRewardDTO {
         ruleReward.setMaxRewards(Long.valueOf(maxRewards));
         ruleReward.setCurrentRewards(Long.valueOf(0));
         ruleReward.setRewardsPerPerson((short) rewardsPerPerson);
+        ruleReward.setStatus(Constants.ON);
         return ruleReward;
     }
 
@@ -121,6 +124,7 @@ public class RuleReward extends MRuleRewardDTO {
         dto.setMaxRewards(getMaxRewards());
         dto.setCurrentRewards(getCurrentRewards());
         dto.setRewardsPerPerson(getRewardsPerPerson());
+        dto.setStatus(getStatus());
         dto.setCreateUser(getCreateUser());
         dto.setCreateTimestamp(getCreateTimestamp());
         dto.setUpdateUser(getUpdateUser());
@@ -142,6 +146,7 @@ public class RuleReward extends MRuleRewardDTO {
         data.setMaxRewards(dto.getMaxRewards());
         data.setCurrentRewards(dto.getCurrentRewards());
         data.setRewardsPerPerson(dto.getRewardsPerPerson());
+        data.setStatus(dto.getStatus());
         data.setCreateUser(dto.getCreateUser());
         data.setCreateTimestamp(dto.getCreateTimestamp());
         data.setUpdateUser(dto.getUpdateUser());
