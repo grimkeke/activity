@@ -1,12 +1,12 @@
 package com.opvita.activity.rewards;
 
+import com.opvita.activity.model.RewardLog;
+import com.opvita.activity.model.Rule;
+import com.opvita.activity.model.RuleReward;
 import com.opvita.activity.daowrapper.RewardLogDAO;
 import com.opvita.activity.daowrapper.RuleRewardDAO;
 import com.opvita.activity.dto.EsOrderDTO;
 import com.opvita.activity.model.EsOrderInfoBean;
-import com.opvita.activity.model.RewardLog;
-import com.opvita.activity.model.Rule;
-import com.opvita.activity.model.RuleReward;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +20,7 @@ public abstract class AbsReward implements Rewardable {
     @Autowired private RewardLogDAO rewardLogDAO;
     @Autowired private RuleRewardDAO ruleRewardDAO;
 
+    // 真实执行奖励的过程（已完成参数校验、流水记录等）
     abstract boolean doReward(EsOrderInfoBean bean, Rule rule, RuleReward reward);
 
     @Override

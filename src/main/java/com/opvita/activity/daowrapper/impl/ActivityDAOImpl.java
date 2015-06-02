@@ -20,10 +20,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -38,6 +35,8 @@ public class ActivityDAOImpl implements ActivityDAO {
     @Autowired private RuleParticipationDAO ruleParticipationDAO;
     @Autowired private ActivityRuleDAO ruleDAO;
 
+    // 不使用cache
+    private static boolean useCache = false;
     private static Map<String, List<Activity>> cache = new ConcurrentHashMap<String, List<Activity>>();
     private static Map<String, Boolean> cacheValidMap = new ConcurrentHashMap<String, Boolean>();
 
@@ -81,7 +80,7 @@ public class ActivityDAOImpl implements ActivityDAO {
         List<Activity> activityList;
 
         String mapKey = issuerId + situation;
-        if (cacheValid(mapKey)) {
+        if (useCache && cacheValid(mapKey)) {
             activityList = cache.get(mapKey);
             if (activityList != null) {
                 log.info("get from cache " + issuerId + " " + situation + ": " + activityList);
@@ -96,10 +95,10 @@ public class ActivityDAOImpl implements ActivityDAO {
 
         activityList = filterActivitiesBySituation(activityList, situation);
 
-        if (ListUtils.isNotEmpty(activityList)) {
+        if (useCache && ListUtils.isNotEmpty(activityList)) {
             if (!cacheValid(mapKey)) {
                 synchronized (cacheValidMap) {
-                    cache.put(mapKey, activityList);
+                    cache.put(mapKey, Collections.unmodifiableList(activityList));
                     cacheValidMap.put(mapKey, true);
                 }
                 log.info("set cache " + issuerId + " " + situation + ": " + activityList);
@@ -113,7 +112,7 @@ public class ActivityDAOImpl implements ActivityDAO {
         if (ListUtils.isNotEmpty(activityList)) {
             for (Activity activity : activityList) {
 
-                List<Rule> ruleList = activity.getRules();
+                List<Rule> ruleList = activity.getRuleList();
                 if (ListUtils.isNotEmpty(ruleList)) {
                     List<Rule> situationRuleList = filterRuleListBySituation(ruleList, situation);
 
@@ -303,6 +302,7 @@ public class ActivityDAOImpl implements ActivityDAO {
                 }
 
                 Rule rule = ruleDAO.getRule(ruleId);
+                rule.setActivityId(activity.getId()); // 记录rule所属的activity
                 activity.addRule(rule);
             }
         }

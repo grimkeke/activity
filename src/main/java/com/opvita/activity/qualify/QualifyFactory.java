@@ -1,36 +1,68 @@
 package com.opvita.activity.qualify;
 
+import com.opvita.activity.enums.QualifyType;
+import com.opvita.activity.qualify.strategy.CountStrategy;
+import com.opvita.activity.qualify.strategy.NominalStrategy;
+import com.opvita.activity.qualify.strategy.PaymentStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 /**
- * Created by rd on 2015/4/27.
+ * Created by rd on 2015/6/1.
  */
 @Component
 public class QualifyFactory {
-    private static NominalQualify nominalQualify;
-    private static PaymentQualify paymentQualify;
+    private static NominalStrategy nominalStrategy;
+    private static PaymentStrategy paymentStrategy;
+    private static CountStrategy countStrategy;
 
-    public static Qualify newInstance(String ruleQualify) {
-        if (Qualify.NOMINAL.equals(ruleQualify)) {
-            return QualifyFactory.nominalQualify;
+    public static Qualify newInstance(QualifyType qualifyType) {
+        switch (qualifyType) {
+            case NOMINAL:
+                return nominalStrategy.newOnceStrategy();
 
-        } else if (Qualify.PAYMENT.equals(ruleQualify)) {
-            return QualifyFactory.paymentQualify;
+            case PAYMENT:
+                return paymentStrategy.newOnceStrategy();
 
-        } else {
-            throw new IllegalStateException("invalid qualification:" + ruleQualify);
+            case COUNT:
+                return countStrategy.newOnceStrategy();
+
+            case TOTAL_NOMINAL:
+                return nominalStrategy.newTotalStrategy();
+
+            case TOTAL_PAYMENT:
+                return paymentStrategy.newTotalStrategy();
+
+            case TOTAL_COUNT:
+                return countStrategy.newTotalStrategy();
+
+            case SALE_NOMINAL:
+                return nominalStrategy.newSaleStrategy();
+
+            case SALE_PAYMENT:
+                return paymentStrategy.newSaleStrategy();
+
+            case SALE_COUNT:
+                return countStrategy.newSaleStrategy();
+
+            default:
+                throw new IllegalStateException("invalid qualify type:" + qualifyType);
         }
     }
 
-    @Autowired @Qualifier("nominalQualify")
-    public void setNominalQualify(NominalQualify nominalQualify) {
-        QualifyFactory.nominalQualify = nominalQualify;
+    @Autowired @Qualifier("nominalStrategy")
+    public void setNominalStrategyFactory(NominalStrategy nominalStrategy) {
+        QualifyFactory.nominalStrategy = nominalStrategy;
     }
 
-    @Autowired @Qualifier("paymentQualify")
-    public void setPaymentQualify(PaymentQualify paymentQualify) {
-        QualifyFactory.paymentQualify = paymentQualify;
+    @Autowired @Qualifier("paymentStrategy")
+    public void setPaymentStrategyFactory(PaymentStrategy paymentStrategy) {
+        QualifyFactory.paymentStrategy = paymentStrategy;
+    }
+
+    @Autowired @Qualifier("countStrategy")
+    public void setCountStrategyFactory(CountStrategy countStrategy) {
+        QualifyFactory.countStrategy = countStrategy;
     }
 }

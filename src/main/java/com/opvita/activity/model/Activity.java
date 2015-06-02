@@ -1,6 +1,7 @@
 package com.opvita.activity.model;
 
 import com.opvita.activity.utils.ListUtils;
+import com.opvita.activity.utils.PriorityComparator;
 import com.opvita.activity.common.Constants;
 import com.opvita.activity.dto.MActivityDTO;
 import com.opvita.activity.model.EsOrderInfoBean;
@@ -12,8 +13,10 @@ import java.util.*;
 /**
  * Created by rd on 2015/4/25.
  */
-public class Activity extends MActivityDTO implements Comparator<Activity> {
+public class Activity extends MActivityDTO implements Comparator<Activity>, HavePriority {
     private static Log log = LogFactory.getLog(Activity.class);
+
+    public static final Activity INSTANCE = new Activity();
 
     // 该活动的规则列表，需要按规则优先级从高到低排序
     private List<Rule> ruleList;
@@ -29,9 +32,9 @@ public class Activity extends MActivityDTO implements Comparator<Activity> {
         ruleList.add(rule);
     }
 
-    public List<Rule> getRules() {
-        if (ruleList != null) {
-            Collections.sort(ruleList, new Rule());
+    public List<Rule> getRuleList() {
+        if (ListUtils.isNotEmpty(ruleList)) {
+            Collections.sort(ruleList, Rule.INSTANCE);
         }
         return ruleList;
     }
@@ -39,14 +42,15 @@ public class Activity extends MActivityDTO implements Comparator<Activity> {
     // 对订单执行活动校验，如果满足活动，则返回所有满足的规则，否则返回null
     public List<Rule> getSatisfiedRules(EsOrderInfoBean bean) {
         List<Rule> satisfiedList = new ArrayList<Rule>();
+        List<Rule> rules = getRuleList();
+
         // 交易发生在活动内，当前时间在活动有效期内
         Date orderDate = bean.getEsOrderDTO().getCreateTime();
-        if (isValid(orderDate)
-                && isValid(new Date())
-                && ListUtils.isNotEmpty(ruleList)) {
-            Collections.sort(ruleList, new Rule());
-
-            for (Rule rule : ruleList) {
+        if (isValid()
+                && dateValid(orderDate)
+                && dateValid(new Date())
+                && ListUtils.isNotEmpty(rules)) {
+            for (Rule rule : rules) {
                 Rule satisfiedRule = rule.checkOrder(bean);
                 if (satisfiedRule != null) {
                     satisfiedList.add(satisfiedRule);
@@ -56,15 +60,22 @@ public class Activity extends MActivityDTO implements Comparator<Activity> {
         return satisfiedList;
     }
 
-    public boolean isValid(Date orderDate) {
+    public boolean isValid() {
+        return Constants.ON.equals(getStatus());
+    }
+
+    public boolean dateValid(Date orderDate) {
         if (orderDate == null) {
             return false;
         }
 
-        boolean valid = Constants.ON.equals(getStatus());
-
+        boolean valid = true;
         if (getValidStart() != null) {
             valid &= (getValidStart().compareTo(orderDate) <= 0);
+            if (!valid) {
+                log.debug("date:" + orderDate + " not valid for start:" + getValidStart());
+                return false;
+            }
         }
 
         if (getValidEnd() != null) {
@@ -83,7 +94,7 @@ public class Activity extends MActivityDTO implements Comparator<Activity> {
     @Override
     public int compare(Activity o1, Activity o2) {
         // 按优先级降序排列
-        return o2.getPriority().subtract(o1.getPriority()).intValue();
+        return PriorityComparator.descentOrder(o1, o2);
     }
 
     public MActivityDTO toDTO() {

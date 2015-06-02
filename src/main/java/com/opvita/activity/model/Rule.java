@@ -1,10 +1,11 @@
 package com.opvita.activity.model;
 
+import com.opvita.activity.enums.QualifyType;
 import com.opvita.activity.qualify.Qualify;
 import com.opvita.activity.qualify.QualifyFactory;
+import com.opvita.activity.utils.PriorityComparator;
 import com.opvita.activity.common.Constants;
 import com.opvita.activity.dto.EsOrderDTO;
-import com.opvita.activity.dto.EsOrderItemsDTOWithBLOBs;
 import com.opvita.activity.dto.MActivityRuleDTO;
 import com.opvita.activity.model.EsOrderInfoBean;
 import org.apache.commons.lang.StringUtils;
@@ -20,9 +21,12 @@ import java.util.Set;
 /**
  * Created by rd on 2015/4/25.
  */
-public class Rule extends MActivityRuleDTO implements Comparator<Rule> {
+public class Rule extends MActivityRuleDTO implements Comparator<Rule>, HavePriority {
     private static Log log = LogFactory.getLog(Rule.class);
 
+    public static final Rule INSTANCE = new Rule();
+
+    private String activityId;       // 记录该规则所属的活动id
     private boolean satisfied;
     private boolean supportAll;
     private Set<String> productSet;  // 哪些商品参与此规则
@@ -34,6 +38,14 @@ public class Rule extends MActivityRuleDTO implements Comparator<Rule> {
     public Rule() {
         this.satisfied = false;
         this.supportAll = true;
+    }
+
+    public void setActivityId(String activityId) {
+        this.activityId = activityId;
+    }
+
+    public String getActivityId() {
+        return activityId;
     }
 
     public boolean isValid() {
@@ -95,8 +107,8 @@ public class Rule extends MActivityRuleDTO implements Comparator<Rule> {
             // 匹配支付类型
             if (StringUtils.isEmpty(getPayType()) ||
                     getPayType().equals(esOrder.getPayChannel())) {
-                // 根据资格和商品参与规则计算订单资格数值
-                BigDecimal orderValue = calculateOrderValue(bean);
+                // 根据资格和商品参与规则计算订单资格数值(包含直接资格、累积资格和换购资格三大类）
+                BigDecimal orderValue = qualify.calculateQualifyValue(bean, this);
 
                 satisfied = orderValueSatisfy(orderValue);
                 log.info("satisfied:[" + satisfied + "] order:" + esOrder.getSn() + " value:" + orderValue  + " " + this);
@@ -114,6 +126,10 @@ public class Rule extends MActivityRuleDTO implements Comparator<Rule> {
         boolean satisfy = true; // sectionBegin and sectionEnd both null, 说明无限制，均满足
         if (getSectionBegin() != null) {
             satisfy = (new BigDecimal(getSectionBegin()).compareTo(orderValue) <= 0);
+            if (!satisfy) {
+                log.debug("orderValue:" + orderValue + " not satisfy section begin:" + getSectionBegin());
+                return false;
+            }
         }
 
         if (getSectionEnd() != null) {
@@ -125,33 +141,14 @@ public class Rule extends MActivityRuleDTO implements Comparator<Rule> {
         return satisfy;
     }
 
-    // 根据资格计算订单金额
-    public BigDecimal calculateOrderValue(EsOrderInfoBean bean) {
-        EsOrderDTO esOrder = bean.getEsOrderDTO();
-        List<EsOrderItemsDTOWithBLOBs> orderItemList = bean.getEsOrderItemsList();
-
-        BigDecimal orderValue = new BigDecimal(0);
-        if (supportAllProducts()) {
-            orderValue = qualify.qualifyOrderValue(esOrder);
-            log.debug("order value:" + orderValue + " for order:" + esOrder.getSn());
-
-        } else {
-            for (EsOrderItemsDTOWithBLOBs orderItem : orderItemList) {
-                String productId = String.valueOf(orderItem.getProductId());
-                if (productParticipate(productId)) {
-                    BigDecimal itemValue = qualify.qualifyOrderItemValue(orderItem);
-                    orderValue = orderValue.add(itemValue);
-                }
-            }
-            log.debug("order value:" + orderValue + " for order:" + esOrder.getSn() + " set:" + getProductSet());
-        }
-        return orderValue;
+    public void setQualification(QualifyType qualifyType) {
+        super.setQualification(qualifyType.toString());
     }
 
     @Override
     public int compare(Rule o1, Rule o2) {
         // 按优先级降序排列
-        return o2.getPriority().subtract(o1.getPriority()).intValue();
+        return PriorityComparator.descentOrder(o1, o2);
     }
 
     public MActivityRuleDTO toDTO() {
@@ -191,7 +188,7 @@ public class Rule extends MActivityRuleDTO implements Comparator<Rule> {
         rule.setCreateTimestamp(dto.getCreateTimestamp());
         rule.setUpdateUser(dto.getUpdateUser());
         rule.setUpdateTimestamp(dto.getUpdateTimestamp());
-        rule.qualify = QualifyFactory.newInstance(rule.getQualification());
+        rule.qualify = QualifyFactory.newInstance(QualifyType.valueOf(rule.getQualification()));
         return rule;
     }
 

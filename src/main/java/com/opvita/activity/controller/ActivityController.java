@@ -1,8 +1,10 @@
 package com.opvita.activity.controller;
 
-import com.opvita.activity.daowrapper.ActivityDAO;
 import com.opvita.activity.model.Activity;
 import com.opvita.activity.model.Rule;
+import com.opvita.activity.utils.ListUtils;
+import com.opvita.activity.daowrapper.ActivityDAO;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +30,18 @@ public class ActivityController {
     @RequestMapping(value = "/dashboard", method = RequestMethod.GET)
     public String dashboard(HttpServletRequest request, ModelMap modelMap) {
         String issuerId = request.getParameter("issuerId");
-        List<Activity> activityList = activityDAO.getActivities(issuerId);
-        log.info("activityList:" + activityList);
+        if (StringUtils.isEmpty(issuerId)) {
+            modelMap.addAttribute("msg", "issuerId should not be null!");
+        } else {
 
-        modelMap.addAttribute("activityList", activityList);
+            List<Activity> activityList = activityDAO.getActivities(issuerId);
+            log.info("activityList:" + activityList);
+            modelMap.addAttribute("activityList", activityList);
+
+            if (ListUtils.isEmpty(activityList)) {
+                modelMap.addAttribute("msg", "no activities for " + issuerId);
+            }
+        }
         return "/activity/addActivity";
     }
 

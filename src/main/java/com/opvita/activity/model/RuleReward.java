@@ -1,12 +1,12 @@
 package com.opvita.activity.model;
 
 import com.opvita.activity.enums.RewardSituation;
+import com.opvita.activity.enums.RewardType;
 import com.opvita.activity.rewards.RewardFactory;
 import com.opvita.activity.rewards.Rewardable;
 import com.opvita.activity.common.Constants;
 import com.opvita.activity.dto.MRuleRewardDTO;
 import com.opvita.activity.model.EsOrderInfoBean;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -23,6 +23,14 @@ public class RuleReward extends MRuleRewardDTO {
     private RewardSituation situation;
 
     private RuleReward() {
+    }
+
+    public void setRewardable(Rewardable rewardable) {
+        this.rewardable = rewardable;
+    }
+
+    public void setSituation(RewardSituation situation) {
+        this.situation = situation;
     }
 
     public RewardSituation getSituation() {
@@ -61,57 +69,40 @@ public class RuleReward extends MRuleRewardDTO {
         return succeed;
     }
 
-    // 通过奖励类型决定奖励发生在何时
-    private static RewardSituation getRewardSituation(String rewardType) {
-        if (StringUtils.isEmpty(rewardType)) {
-            throw new NullPointerException("rewardType should not be empty!");
-        }
-
-        if (Rewardable.DISCOUNT.equals(rewardType) || Rewardable.PERCENTAGE.equals(rewardType)) {
-            return RewardSituation.BEFORE_MAKE_ORDER;
-
-        } else if (Rewardable.NEW_CARD.equals(rewardType)) {
-            return RewardSituation.AFTER_PAY_SUCCESS;
-
-        } else {
-            throw new IllegalStateException("invalid rewardType:" + rewardType);
-        }
-    }
-
-    public static RuleReward newDiscountReward(int value, int maxRewards, int rewardsPerPerson) {
-        RuleReward ruleReward = newInstance(maxRewards, rewardsPerPerson);
-        ruleReward.setRewardValue(Long.valueOf(value));
-        ruleReward.setRewardType(Rewardable.DISCOUNT);
-        ruleReward.rewardable = RewardFactory.newInstance(ruleReward.getRewardType());
-        ruleReward.situation = RewardSituation.BEFORE_MAKE_ORDER;
-        return ruleReward;
-    }
-
-    public static RuleReward newPercentageReward(int value, int maxRewards, int rewardsPerPerson) {
-        RuleReward ruleReward = newInstance(maxRewards, rewardsPerPerson);
-        ruleReward.setRewardValue(Long.valueOf(value));
-        ruleReward.setRewardType(Rewardable.PERCENTAGE);
-        ruleReward.rewardable = RewardFactory.newInstance(ruleReward.getRewardType());
-        ruleReward.situation = RewardSituation.BEFORE_MAKE_ORDER;
-        return ruleReward;
-    }
-
-    public static RuleReward newProductReward(String productId, int maxRewards, int rewardsPerPerson) {
-        RuleReward ruleReward = newInstance(maxRewards, rewardsPerPerson);
-        ruleReward.setRewardProduct(productId);
-        ruleReward.setRewardType(Rewardable.NEW_CARD);
-        ruleReward.rewardable = RewardFactory.newInstance(ruleReward.getRewardType());
-        ruleReward.situation = RewardSituation.AFTER_PAY_SUCCESS;
-        return ruleReward;
-    }
-
-    private static RuleReward newInstance(int maxRewards, int rewardsPerPerson) {
+    // 使用RewardFactory静态方法创建，如newCashierRechargeReward(int, int, int)
+    public static RuleReward newInstance(RewardType rewardType, int maxRewards, int rewardsPerPerson) {
         RuleReward ruleReward = new RuleReward();
         ruleReward.setMaxRewards(Long.valueOf(maxRewards));
         ruleReward.setCurrentRewards(Long.valueOf(0));
         ruleReward.setRewardsPerPerson((short) rewardsPerPerson);
         ruleReward.setStatus(Constants.ON);
+        ruleReward.setRewardType(rewardType);
+        ruleReward.setRewardable(RewardFactory.newInstance(rewardType));
+        ruleReward.setSituation(getRewardSituation(rewardType));
         return ruleReward;
+    }
+
+    // 通过奖励类型决定奖励发生在何时
+    private static RewardSituation getRewardSituation(RewardType rewardType) {
+        switch (rewardType) {
+            case DISCOUNT:
+            case PERCENTAGE:
+            case SALE:
+                return RewardSituation.BEFORE_MAKE_ORDER;
+
+            case NEW_CARD:
+            case EXTRA_CARD:
+            case RECHARGE_PCARD:
+            case CASHIER_RECHARGE:
+                return RewardSituation.AFTER_PAY_SUCCESS;
+
+            default:
+                throw new IllegalStateException("invalid rewardType:" + rewardType);
+        }
+    }
+
+    public void setRewardType(RewardType rewardType) {
+        super.setRewardType(rewardType.toString());
     }
 
     public MRuleRewardDTO toDTO() {
@@ -151,8 +142,10 @@ public class RuleReward extends MRuleRewardDTO {
         data.setCreateTimestamp(dto.getCreateTimestamp());
         data.setUpdateUser(dto.getUpdateUser());
         data.setUpdateTimestamp(dto.getUpdateTimestamp());
-        data.rewardable = RewardFactory.newInstance(data.getRewardType());
-        data.situation = getRewardSituation(data.getRewardType());
+
+        RewardType theType = RewardType.valueOf(data.getRewardType());
+        data.setRewardable(RewardFactory.newInstance(theType));
+        data.setSituation(getRewardSituation(theType));
         return data;
     }
 

@@ -8,6 +8,7 @@ public interface ActivityMapper {
     public String nextActivityRuleId();
     public String nextRuleRewardId();
     public String nextRewardLogId();
+    public String nextSaleProductId();
     public String nextRuleParticipationId();
     public String nextProductParticipationId();
 }

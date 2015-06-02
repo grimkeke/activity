@@ -13,7 +13,6 @@ import com.opvita.activity.daowrapper.RuleRewardDAO;
 import com.opvita.activity.dto.MActivityRuleDTO;
 import com.opvita.activity.dto.MActivityRuleDTOCriteria;
 import com.opvita.activity.dto.MProductParticipationDTO;
-import com.opvita.activity.dto.MRuleParticipationDTO;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +51,7 @@ public class ActivityRuleDAOImpl implements ActivityRuleDAO {
                 ruleList.add(attachRuleInfo(rule));
             }
             // 按规则优先级倒序排序
-            Collections.sort(ruleList, new Rule());
+            Collections.sort(ruleList, Rule.INSTANCE);
         }
         return ruleList;
     }

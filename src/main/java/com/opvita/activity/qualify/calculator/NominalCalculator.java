@@ -1,30 +1,23 @@
-package com.opvita.activity.qualify;
-
+package com.opvita.activity.qualify.calculator;
 
 import com.opvita.activity.dto.EsOrderDTO;
 import com.opvita.activity.dto.EsOrderItemsDTO;
 import com.opvita.activity.dto.MProductInfoDTO;
 import com.opvita.activity.utils.SysPara;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 
 /**
- * Created by rd on 2015/4/27.
- * 根据卡面金额计算的资格类型
- * 按分进行计算
+ * Created by rd on 2015/5/31.
+ * 按面额计算资格，单位为分
  */
-@Component("nominalQualify")
-public class NominalQualify implements Qualify {
-    private static Log log = LogFactory.getLog(NominalQualify.class);
-
+@Component("nominalCalculator")
+public class NominalCalculator implements QualifyCalculator {
     @Override
     public BigDecimal qualifyOrderValue(EsOrderDTO esOrder) {
-        BigDecimal orderValue = esOrder.getGoodsAmount();
-        log.debug("order value:" + orderValue + " for order:" + esOrder.getSn());
-        return orderValue;
+        // 返回所有商品卡面金额
+        return esOrder.getGoodsAmount();
     }
 
     @Override
@@ -36,8 +29,6 @@ public class NominalQualify implements Qualify {
         MProductInfoDTO productInfo = SysPara.getMProductInfoDTOByProductId(productId);
 
         BigDecimal itemValue = count.multiply(new BigDecimal(productInfo.getCardPrice()));
-
-        log.debug("item value:" + itemValue + " for esOrderItem:" + esOrderItem.getItemId());
         return itemValue;
     }
 }

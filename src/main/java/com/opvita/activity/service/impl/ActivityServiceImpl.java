@@ -1,13 +1,17 @@
-package com.opvita.activity.service;
+package com.opvita.activity.service.impl;
 
 import com.opvita.activity.enums.RewardSituation;
-import com.opvita.activity.model.*;
+import com.opvita.activity.model.Activity;
+import com.opvita.activity.model.Rule;
+import com.opvita.activity.model.RuleReward;
+import com.opvita.activity.service.ActivityService;
 import com.opvita.activity.utils.ListUtils;
-import com.opvita.activity.daowrapper.*;
+import com.opvita.activity.daowrapper.ActivityDAO;
+import com.opvita.activity.daowrapper.ActivityRuleDAO;
+import com.opvita.activity.daowrapper.RuleParticipationDAO;
 import com.opvita.activity.dto.EsOrderDTO;
 import com.opvita.activity.dto.MRuleParticipationDTO;
 import com.opvita.activity.model.EsOrderInfoBean;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +22,7 @@ import java.util.*;
 /**
  * Created by rd on 2015/4/27.
  */
-@Service
+@Service("localActivityService")
 public class ActivityServiceImpl implements ActivityService {
     private static Log log = LogFactory.getLog(ActivityServiceImpl.class);
 
@@ -36,7 +40,7 @@ public class ActivityServiceImpl implements ActivityService {
         if (ListUtils.isNotEmpty(activityList)) {
             for (Activity satisfiedActivity : activityList) {
 
-                List<Rule> satisfiedRuleList = satisfiedActivity.getRules();
+                List<Rule> satisfiedRuleList = satisfiedActivity.getRuleList();
                 executeRuleList(bean, satisfiedRuleList);
 
                 // 活动互斥
@@ -83,8 +87,6 @@ public class ActivityServiceImpl implements ActivityService {
         List<Activity> satisfiedActivityList = new ArrayList<Activity>();
 
         if (ListUtils.isNotEmpty(activityList)) {
-            Collections.sort(activityList, new Activity());
-
             for (Activity activity : activityList) {
                 List<Rule> satisfiedRuleList = activity.getSatisfiedRules(bean);
 
@@ -94,6 +96,7 @@ public class ActivityServiceImpl implements ActivityService {
                 }
             }
         }
+        log.debug("satisfied activities:" + satisfiedActivityList);
         return satisfiedActivityList;
     }
 
@@ -132,6 +135,7 @@ public class ActivityServiceImpl implements ActivityService {
         for (String key : activityMap.keySet()) {
             activityList.add(activityMap.get(key));
         }
+        Collections.sort(activityList, Activity.INSTANCE);
         return activityList;
     }
 }

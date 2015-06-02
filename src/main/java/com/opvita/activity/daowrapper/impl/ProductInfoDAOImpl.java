@@ -12,8 +12,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ProductInfoDAOImpl implements ProductInfoDAO {
-    @Autowired
-    private MProductInfoDTOMapper mapper;
+    @Autowired private MProductInfoDTOMapper mapper;
 
     @Override
     public Long getProductCardPrice(String productId) {
